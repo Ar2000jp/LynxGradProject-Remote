@@ -3,6 +3,8 @@
  Remote control code.
  */
 
+#include <Keypad.h>
+
 // Pin definitions
 const int nBuzzer = 12;
 const int nRedLED = 10;
@@ -26,12 +28,37 @@ const int keypadRow2 = 31;
 const int keypadRow3 = 32;
 const int keypadRow4 = 33;
 
+// Keypad stuff
+const byte keypadRows = 4;
+const byte keypadCols = 4;
+
+const char hexaKeys[keypadRows][keypadCols] = {
+  {
+    '0','1','2','3'      }
+  ,
+  {
+    '4','5','6','7'      }
+  ,
+  {
+    '8','9','A','B'      }
+  ,
+  {
+    'C','D','E','F'      }
+};
+
+const byte rowPins[keypadRows] = {
+  keypadRow1, keypadRow2, keypadRow3, keypadRow4};
+const byte colPins[keypadCols] = {
+  keypadCol1, keypadCol2, keypadCol3, keypadCol4};
+Keypad keypad = Keypad(makeKeymap(hexaKeys), (byte*)rowPins, (byte*)colPins, keypadRows, keypadCols);
+
 // Flags
 int debugMode = 0;
 
 // Variables
-char charBuf[8];
 
+
+// Helper functions
 void activateBuzzer(bool state){
   digitalWrite(nBuzzer, !state);
 }
@@ -54,6 +81,7 @@ void checkSerial(){
       Serial.println("b\tBuzz");
       Serial.println("r\tBlink red LED");
       Serial.println("g\tBlink green LED");
+      Serial.println("k\tRead Keypad");
       Serial.println("q\tExit debug mode");
 
       debugMode = 1;
@@ -84,6 +112,14 @@ void checkSerial(){
           activateGreenLED(true);
           delay(100);
           activateGreenLED(false);
+          break;
+
+        case 'k':
+          Serial.println("Reading Keypad. Press any key on Keypad.");
+          char readChar;
+          readChar = keypad.waitForKey();
+          Serial.print("Key pressed is: ");
+          Serial.println(readChar);
           break;
 
         case 'q':
@@ -121,13 +157,13 @@ void setup(){
 
   // Get pins into the correct mode
   pinMode(nBuzzer, OUTPUT);
-  digitalWrite(nBuzzer, HIGH);
+  activateBuzzer(false);
 
   pinMode(nRedLED, OUTPUT);
-  digitalWrite(nRedLED, HIGH);
+  activateRedLED(false);
 
   pinMode(nGreenLED, OUTPUT);
-  digitalWrite(nGreenLED, HIGH);
+  activateGreenLED(false);
 
   pinMode(spiMISO, INPUT);
 
@@ -141,16 +177,6 @@ void setup(){
   digitalWrite(spiNRadioSelect, LOW);
 
   pinMode(radioInterruptPin, INPUT);
-
-  pinMode(keypadCol1, INPUT);
-  pinMode(keypadCol2, INPUT);
-  pinMode(keypadCol3, INPUT);
-  pinMode(keypadCol4, INPUT);
-
-  pinMode(keypadRow1, INPUT);
-  pinMode(keypadRow2, INPUT);
-  pinMode(keypadRow3, INPUT);
-  pinMode(keypadRow4, INPUT);
 
   // Buzzer salute
   activateBuzzer(true);
@@ -169,5 +195,8 @@ void loop(){
   // Check for data on Serial
   checkSerial();
 }
+
+
+
 
 
