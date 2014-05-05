@@ -1,5 +1,12 @@
 #include "debug.h"
 
+bool Debug::s_DebugMode = false;
+
+LEDs Debug::s_LEDs;
+Buzzer Debug::s_Buzzer;
+Alarm Debug::s_Alarm;
+MyKeypad Debug::s_Keypad;
+
 Debug::Debug()
 {
 
@@ -21,6 +28,8 @@ void Debug::start()
 
     while (s_DebugMode == true) {
         s_Alarm.update();
+        readChar = 0;
+        level = 0;
 
         // Process data from Serial
         if (Serial.available() < 1) {
@@ -63,8 +72,9 @@ void Debug::start()
 
         case 'k':
             Serial.println("Reading Keypad. Press any key on Keypad.");
-            while (readChar == 0)
+            while (readChar == 0) {
                 readChar = s_Keypad.getKey();
+            }
             Serial.print("Key pressed is: ");
             Serial.println(readChar);
             break;

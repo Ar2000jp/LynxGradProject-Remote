@@ -64,25 +64,23 @@ void Buzzer::salute()
 
 void Buzzer::update()
 {
-    if (s_BuzzerTone == ToneConstant) {
-        return;
-    }
-
-    unsigned long currentTime = millis();
-    if (currentTime >= (s_PrevTime + s_ToneTime[s_ToneStage])) {
-        s_State = !s_State;
-        s_ToneStage++;
-        s_PrevTime = currentTime;
-    }
-
-    if (s_ToneStage > 3) {
-        if (s_BuzzerTone == ToneSalute) {
-            setTone(ToneOff);
+    if (s_BuzzerTone != ToneConstant && s_BuzzerTone != ToneOff) {
+        unsigned long currentTime = millis();
+        if (currentTime >= (s_PrevTime + s_ToneTime[s_ToneStage])) {
+            s_State = !s_State;
+            s_ToneStage++;
+            s_PrevTime = currentTime;
         }
-        s_ToneStage = 0;
-    }
 
-    digitalWrite(c_nBuzzerPin, !s_State);
+        if (s_ToneStage > 3) {
+            if (s_BuzzerTone == ToneSalute) {
+                setTone(ToneOff);
+            }
+            s_ToneStage = 0;
+        }
+
+        digitalWrite(c_nBuzzerPin, !s_State);
+    }
 }
 
 void Buzzer::turnOn()

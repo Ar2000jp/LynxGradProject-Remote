@@ -4,10 +4,13 @@
  */
 
 #include <Keypad.h>
+#include <SPI.h>
+#include <RH_RF22.h>
+#include <RHReliableDatagram.h>
 
 #include "alarm.h"
 #include "myserial.h"
-//#include "radio.h"
+#include "radio.h"
 #include "mykeypad.h"
 #include "debug.h"
 #include "buzzer.h"
@@ -17,19 +20,13 @@
 //const int spiMOSI = 51;
 //const int spiSCK = 52;
 
-// Function declarations
-//char readKeypad();
-
-// Flags
-
-// Variables
-//MySerial G_MySerial;
 Alarm G_Alarm;
-//Radio G_Radio;
+Radio G_Radio;
 MyKeypad G_Keypad;
-//Debug G_Debug;
+Debug G_Debug;
 Buzzer G_Buzzer;
 LEDs G_LEDs;
+RH_RF22 G_Driver;
 
 char G_Key = 0;
 
@@ -44,7 +41,8 @@ void setup()
     Serial1.setTimeout(100);
 
     // Initialize Radio
-
+    G_Radio.init();
+    //SPI.setClockDivider(SPI_CLOCK_DIV128);
 
     // Welcome pattern
     G_Buzzer.salute();
@@ -58,7 +56,7 @@ void loop()
     // Check for data on Serial
     if (Serial.available() > 0) {
         if (Serial.read() == 'd') {
-//            G_Debug.start();
+            G_Debug.start();
         } else {
             // Clear buffer if 'd' is not received.
             drainSerial();
@@ -96,7 +94,8 @@ void loop()
 
     // Read keypad
     // If a key gets pressed, we send it to the Car
-    if (G_Keypad.getKey() != 0) {
+    G_Key = G_Keypad.getKey();
+    if (G_Key != 0) {
         // If the 'F' key is pressed we lower the alarm level in the remote. Like a silence button.
         if (G_Key == 'F') {
             if (G_Alarm.getLevel() > Alarm::AlarmAttention) {
@@ -123,7 +122,7 @@ void loop()
     //G_LEDs.update();
     G_Alarm.update();
 
-    Serial.println("Hi");
+    Serial.print("*");
 }
 
 

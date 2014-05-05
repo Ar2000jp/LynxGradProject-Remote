@@ -41,7 +41,7 @@ private:
     static const unsigned int c_Blink50DCOnTime1 = 300;
     static const unsigned int c_Blink50DCOffTime1 = 300;
 
-    static const byte c_nLEDPin[c_LEDCount];// = {10, 8};
+    static const byte c_nLEDPin[c_LEDCount];
 
 };
 

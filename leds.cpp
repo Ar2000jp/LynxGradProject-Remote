@@ -2,7 +2,7 @@
 
 bool LEDs::s_Initialized = false;
 
-LEDs::BlinkType LEDs::s_BlinkType[c_LEDCount] = {BlinkNone, BlinkNone};
+LEDs::BlinkType LEDs::s_BlinkType[c_LEDCount] = {BlinkOff, BlinkOff};
 unsigned long LEDs::s_BlinkTime[c_LEDCount][4] = {{0, 0, 0, 0}, {0, 0, 0, 0}};
 unsigned long LEDs::s_PrevTime[c_LEDCount] = {0, 0};
 bool LEDs::s_State[c_LEDCount] = {false, false};
@@ -67,7 +67,7 @@ void LEDs::update()
     unsigned long currentTime = millis();
 
     for (byte index = 0; index < c_LEDCount; index++) {
-        if (s_BlinkType[index] != BlinkNone) {
+        if (s_BlinkType[index] != BlinkNone && s_BlinkType[index] != BlinkOff) {
             if (currentTime >= (s_PrevTime[index] + s_BlinkTime[index][s_BlinkStage[index]])) {
                 s_State[index] = !s_State[index];
                 s_BlinkStage[index]++;
@@ -76,7 +76,7 @@ void LEDs::update()
 
             if (s_BlinkStage[index] > 3) {
                 if (s_BlinkType[index] == Blink2ShortStop) {
-                    setPattern((LEDColor)index, BlinkOff);
+                    turnOff((LEDColor)index);
                 }
                 s_BlinkStage[index] = 0;
             }
