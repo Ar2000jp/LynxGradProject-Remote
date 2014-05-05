@@ -1,10 +1,10 @@
 #include "leds.h"
+#include <ChibiOS_AVR.h>
 
 bool LEDs::s_Initialized = false;
 
 LEDs::BlinkType LEDs::s_BlinkType[c_LEDCount] = {BlinkOff, BlinkOff};
 unsigned long LEDs::s_BlinkTime[c_LEDCount][4] = {{0, 0, 0, 0}, {0, 0, 0, 0}};
-unsigned long LEDs::s_PrevTime[c_LEDCount] = {0, 0};
 bool LEDs::s_State[c_LEDCount] = {false, false};
 byte LEDs::s_BlinkStage[c_LEDCount] = {0, 0};
 
@@ -57,33 +57,8 @@ void LEDs::setPattern(LEDs::LEDColor color, LEDs::BlinkType blinkType)
 
     s_BlinkType[color] = blinkType;
     s_BlinkStage[color] = 0;
-    s_PrevTime[color] = 0;
 
     digitalWrite(c_nLEDPin[color], !s_State[color]);
-}
-
-void LEDs::update()
-{
-    unsigned long currentTime = millis();
-
-    for (byte index = 0; index < c_LEDCount; index++) {
-        if (s_BlinkType[index] != BlinkNone && s_BlinkType[index] != BlinkOff) {
-            if (currentTime >= (s_PrevTime[index] + s_BlinkTime[index][s_BlinkStage[index]])) {
-                s_State[index] = !s_State[index];
-                s_BlinkStage[index]++;
-                s_PrevTime[index] = currentTime;
-            }
-
-            if (s_BlinkStage[index] > 3) {
-                if (s_BlinkType[index] == Blink2ShortStop) {
-                    turnOff((LEDColor)index);
-                }
-                s_BlinkStage[index] = 0;
-            }
-        }
-
-        digitalWrite(c_nLEDPin[index], !s_State[index]);
-    }
 }
 
 void LEDs::turnOn(LEDs::LEDColor color)
@@ -94,4 +69,35 @@ void LEDs::turnOn(LEDs::LEDColor color)
 void LEDs::turnOff(LEDs::LEDColor color)
 {
     setPattern(color, BlinkOff);
+}
+
+void LEDs::run(LEDs::LEDColor color)
+{
+    while (1) {
+        if (s_BlinkType[color] == BlinkNone) {
+            s_State[color] = true;
+            digitalWrite(c_nLEDPin[color], !s_State[color]);
+            chThdSleepMilliseconds(50);
+            continue;
+        }
+        if (s_BlinkType[color] == BlinkOff) {
+            s_State[color] = false;
+            digitalWrite(c_nLEDPin[color], !s_State[color]);
+            chThdSleepMilliseconds(50);
+            continue;
+        }
+
+        chThdSleepMilliseconds(s_BlinkTime[color][s_BlinkStage[color]]);
+        s_State[color] = !s_State[color];
+        s_BlinkStage[color]++;
+
+        if (s_BlinkStage[color] > 3) {
+            if (s_BlinkType[color] == Blink2ShortStop) {
+                turnOff((LEDColor)color);
+            }
+            s_BlinkStage[color] = 0;
+        }
+
+        digitalWrite(c_nLEDPin[color], !s_State[color]);
+    }
 }

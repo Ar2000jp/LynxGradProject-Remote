@@ -27,7 +27,6 @@ void Debug::start()
     printHelp();
 
     while (s_DebugMode == true) {
-        s_Alarm.update();
         readChar = 0;
         level = 0;
 

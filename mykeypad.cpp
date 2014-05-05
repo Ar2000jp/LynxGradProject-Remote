@@ -43,8 +43,6 @@ char MyKeypad::getKey()
     }
 
     if (s_Key != s_LastKey) {
-        Serial.print("Key: ");
-        Serial.print(s_Key);
         return s_Key;
     }
 

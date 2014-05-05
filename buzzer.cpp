@@ -1,10 +1,10 @@
 #include "buzzer.h"
+#include <ChibiOS_AVR.h>
 
 bool Buzzer::s_Initialized = false;
 
 Buzzer::BuzzerTone Buzzer::s_BuzzerTone = Buzzer::ToneConstant;
 unsigned long Buzzer::s_ToneTime[4] = {0, 0, 0, 0};
-unsigned long Buzzer::s_PrevTime = 0;
 byte Buzzer::s_ToneStage = 0;
 bool Buzzer::s_State = false;
 
@@ -52,7 +52,6 @@ void Buzzer::setTone(Buzzer::BuzzerTone tone)
 
     s_BuzzerTone = tone;
     s_ToneStage = 0;
-    s_PrevTime = 0;
 
     digitalWrite(c_nBuzzerPin, !s_State);
 }
@@ -60,27 +59,6 @@ void Buzzer::setTone(Buzzer::BuzzerTone tone)
 void Buzzer::salute()
 {
     setTone(ToneSalute);
-}
-
-void Buzzer::update()
-{
-    if (s_BuzzerTone != ToneConstant && s_BuzzerTone != ToneOff) {
-        unsigned long currentTime = millis();
-        if (currentTime >= (s_PrevTime + s_ToneTime[s_ToneStage])) {
-            s_State = !s_State;
-            s_ToneStage++;
-            s_PrevTime = currentTime;
-        }
-
-        if (s_ToneStage > 3) {
-            if (s_BuzzerTone == ToneSalute) {
-                setTone(ToneOff);
-            }
-            s_ToneStage = 0;
-        }
-
-        digitalWrite(c_nBuzzerPin, !s_State);
-    }
 }
 
 void Buzzer::turnOn()
@@ -91,4 +69,35 @@ void Buzzer::turnOn()
 void Buzzer::turnOff()
 {
     setTone(ToneOff);
+}
+
+void Buzzer::run()
+{
+    while (1) {
+        if (s_BuzzerTone == ToneConstant) {
+            s_State = true;
+            digitalWrite(c_nBuzzerPin, !s_State);
+            chThdSleepMilliseconds(50);
+            continue;
+        }
+        if (s_BuzzerTone == ToneOff) {
+            s_State = false;
+            digitalWrite(c_nBuzzerPin, !s_State);
+            chThdSleepMilliseconds(50);
+            continue;
+        }
+
+        chThdSleepMilliseconds(s_ToneTime[s_ToneStage]);
+        s_State = !s_State;
+        s_ToneStage++;
+
+        if (s_ToneStage > 3) {
+            if (s_BuzzerTone == ToneSalute) {
+                setTone(ToneOff);
+            }
+            s_ToneStage = 0;
+        }
+
+        digitalWrite(c_nBuzzerPin, !s_State);
+    }
 }

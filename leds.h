@@ -15,7 +15,7 @@ public:
     void setPattern(LEDColor color, BlinkType blinkType);
     void turnOn(LEDColor color);
     void turnOff(LEDColor color);
-    void update();
+    void run(LEDColor color);
 
 private:
     static const byte c_LEDCount = 2;
@@ -24,7 +24,6 @@ private:
 
     static BlinkType s_BlinkType[c_LEDCount];
     static unsigned long s_BlinkTime[c_LEDCount][4];
-    static unsigned long s_PrevTime[c_LEDCount];
     static bool s_State[c_LEDCount];
     static byte s_BlinkStage[c_LEDCount];
 

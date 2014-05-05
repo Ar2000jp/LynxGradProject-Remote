@@ -15,14 +15,13 @@ public:
     void salute();
     void turnOn();
     void turnOff();
-    void update();
+    void run();
 
 private:
     static bool s_Initialized;
 
     static BuzzerTone s_BuzzerTone;
     static unsigned long s_ToneTime[4];
-    static unsigned long s_PrevTime;
     static bool s_State;
     static byte s_ToneStage;
 

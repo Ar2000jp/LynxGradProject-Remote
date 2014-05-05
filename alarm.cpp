@@ -56,8 +56,16 @@ Alarm::AlarmLevel Alarm::getLevel()
     return s_AlarmLevel;
 }
 
-void Alarm::update()
+void Alarm::raiseLevel(Alarm::AlarmLevel level)
 {
-    m_Buzzer.update();
-    m_LEDs.update();
+    if (getLevel() < level) {
+        setLevel(level);
+    }
+}
+
+void Alarm::lowerLevel(Alarm::AlarmLevel level)
+{
+    if (getLevel() > level) {
+        setLevel(level);
+    }
 }

@@ -14,7 +14,8 @@ public:
 
     void setLevel(AlarmLevel level);
     AlarmLevel getLevel();
-    void update();
+    void raiseLevel(AlarmLevel level);
+    void lowerLevel(AlarmLevel level);
 
 private:
     static AlarmLevel s_AlarmLevel;
