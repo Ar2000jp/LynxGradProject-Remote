@@ -17,7 +17,7 @@ LEDs::LEDs()
 
         for (byte index = 0; index < c_LEDCount; index++) {
             pinMode(c_nLEDPin[index], OUTPUT);
-            activate((LEDColor)index, false);
+            turnOff((LEDColor)index);
         }
     }
 }
@@ -27,42 +27,37 @@ LEDs::~LEDs()
 
 }
 
-void LEDs::activate(LEDs::LEDColor color, bool state, LEDs::BlinkType blinkType)
+void LEDs::setPattern(LEDs::LEDColor color, LEDs::BlinkType blinkType)
 {
-    if (state == false) {
-        s_BlinkType[color] = BlinkNone;
+    if (blinkType == BlinkOff) {
         s_State[color] = false;
     } else if (blinkType == BlinkNone) {
-        s_BlinkType[color] = BlinkNone;
         s_State[color] = true;
     } else if (blinkType == Blink2Short) {
-        s_BlinkType[color] = Blink2Short;
         s_BlinkTime[color][0] = c_Blink2ShortOnTime1;
         s_BlinkTime[color][1] = c_Blink2ShortOffTime1;
         s_BlinkTime[color][2] = c_Blink2ShortOnTime2;
         s_BlinkTime[color][3] = c_Blink2ShortOffTime2;
-        s_BlinkStage[color] = 0;
-        s_PrevTime[color] = 0;
         s_State[color] = true;
     } else if (blinkType == Blink50DC) {
-        s_BlinkType[color] = Blink50DC;
         s_BlinkTime[color][0] = c_Blink50DCOnTime1;
         s_BlinkTime[color][1] = c_Blink50DCOffTime1;
         s_BlinkTime[color][2] = c_Blink50DCOnTime1;
         s_BlinkTime[color][3] = c_Blink50DCOffTime1;
-        s_BlinkStage[color] = 0;
-        s_PrevTime[color] = 0;
         s_State[color] = true;
     } else if (blinkType == Blink2ShortStop) {
-        s_BlinkType[color] = Blink2ShortStop;
         s_BlinkTime[color][0] = c_Blink2ShortStopOnTime1;
         s_BlinkTime[color][1] = c_Blink2ShortStopOffTime1;
         s_BlinkTime[color][2] = c_Blink2ShortStopOnTime2;
         s_BlinkTime[color][3] = c_Blink2ShortStopOffTime2;
-        s_BlinkStage[color] = 0;
-        s_PrevTime[color] = 0;
         s_State[color] = true;
+    } else {
+        return;
     }
+
+    s_BlinkType[color] = blinkType;
+    s_BlinkStage[color] = 0;
+    s_PrevTime[color] = 0;
 
     digitalWrite(c_nLEDPin[color], !s_State[color]);
 }
@@ -81,7 +76,7 @@ void LEDs::update()
 
             if (s_BlinkStage[index] > 3) {
                 if (s_BlinkType[index] == Blink2ShortStop) {
-                    activate((LEDColor)index, false);
+                    setPattern((LEDColor)index, BlinkOff);
                 }
                 s_BlinkStage[index] = 0;
             }
@@ -89,4 +84,14 @@ void LEDs::update()
 
         digitalWrite(c_nLEDPin[index], !s_State[index]);
     }
+}
+
+void LEDs::turnOn(LEDs::LEDColor color)
+{
+    setPattern(color, BlinkNone);
+}
+
+void LEDs::turnOff(LEDs::LEDColor color)
+{
+    setPattern(color, BlinkOff);
 }

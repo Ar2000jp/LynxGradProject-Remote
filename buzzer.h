@@ -6,13 +6,15 @@
 class Buzzer
 {
 public:
-    enum BuzzerTone {ToneConstant = 0, Tone2Short, Tone50DC, ToneSalute};
+    enum BuzzerTone {ToneOff = 0, ToneConstant, Tone2Short, Tone50DC, ToneSalute};
 
     Buzzer();
     ~Buzzer();
 
-    void activate(bool state, BuzzerTone tone = ToneConstant);
+    void setTone(BuzzerTone tone);
     void salute();
+    void turnOn();
+    void turnOff();
     void update();
 
 private:

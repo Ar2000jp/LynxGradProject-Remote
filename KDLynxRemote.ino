@@ -6,10 +6,10 @@
 #include <Keypad.h>
 
 #include "alarm.h"
-//#include "myserial.h"
+#include "myserial.h"
 //#include "radio.h"
-//#include "mykeypad.h"
-//#include "debug.h"
+#include "mykeypad.h"
+#include "debug.h"
 #include "buzzer.h"
 #include "leds.h"
 
@@ -17,13 +17,16 @@
 //const int spiMOSI = 51;
 //const int spiSCK = 52;
 
+// Function declarations
+//char readKeypad();
+
 // Flags
 
 // Variables
 //MySerial G_MySerial;
 Alarm G_Alarm;
 //Radio G_Radio;
-//MyKeypad G_MyKeypad;
+MyKeypad G_Keypad;
 //Debug G_Debug;
 Buzzer G_Buzzer;
 LEDs G_LEDs;
@@ -45,7 +48,7 @@ void setup()
 
     // Welcome pattern
     G_Buzzer.salute();
-    G_LEDs.activate(LEDs::LEDGreen, true, LEDs::Blink2ShortStop);
+    G_LEDs.setPattern(LEDs::LEDGreen, LEDs::Blink2ShortStop);
 
     Serial.println("Send 'd' to enter debug mode.");
 }
@@ -93,7 +96,7 @@ void loop()
 
     // Read keypad
     // If a key gets pressed, we send it to the Car
-    if (readKeypad() != 0) {
+    if (G_Keypad.getKey() != 0) {
         // If the 'F' key is pressed we lower the alarm level in the remote. Like a silence button.
         if (G_Key == 'F') {
             if (G_Alarm.getLevel() > Alarm::AlarmAttention) {
@@ -106,7 +109,7 @@ void loop()
             // First byte is 'c', which means command. 2nd byte is the key code.
             //radioBuf[0] = 'c';
             //radioBuf[1] = key;
-            G_LEDs.activate(LEDs::LEDGreen, true);
+            G_LEDs.turnOn(LEDs::LEDGreen);
             //if (!manager.sendtoWait(radioBuf, 2, SERVER_ADDRESS))
             {
                 //Serial.println("sendtoWait failed");

@@ -7,12 +7,14 @@ class LEDs
 {
 public:
     enum LEDColor {LEDRed = 0, LEDGreen};
-    enum BlinkType {BlinkNone = 0, Blink2Short, Blink50DC, Blink2ShortStop};
+    enum BlinkType {BlinkOff = 0, BlinkNone, Blink2Short, Blink50DC, Blink2ShortStop};
 
     LEDs();
     ~LEDs();
 
-    void activate(LEDColor color, bool state, BlinkType blinkType = BlinkNone);
+    void setPattern(LEDColor color, BlinkType blinkType);
+    void turnOn(LEDColor color);
+    void turnOff(LEDColor color);
     void update();
 
 private:
