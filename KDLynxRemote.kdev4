@@ -1,0 +1,4 @@
+[Project]
+Name=KDLynxRemote
+Manager=KDevCMakeManager
+VersionControl=kdevgit
