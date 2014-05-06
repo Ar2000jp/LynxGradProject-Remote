@@ -31,6 +31,9 @@ void Radio::init()
 
         // Use max Tx power
         s_Driver.setTxPower(RH_RF22_TXPOW_20DBM);
+
+        s_Manager.setTimeout(100);
+        s_Manager.setRetries(5);
     }
 }
 
@@ -40,7 +43,7 @@ bool Radio::send(uint8_t* buf, uint8_t bufLen)
         Serial.println("sendtoWait failed");
         return false;
     }
-
+    Serial.println("sendtoWait succeeded");
     return true;
 }
 
@@ -60,9 +63,9 @@ bool Radio::recv(uint8_t* buf, uint8_t* bufLen)
     Serial.print(": ");
     Serial.println((char*)buf);
 
-    if (from != c_RCAddress) {
+    if (from != c_CarAddress) {
         return false;
     }
 
-    return 0;
+    return true;
 }

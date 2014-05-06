@@ -69,7 +69,7 @@ void mainThread()
                       NORMALPRIO + 1, BuzzerThread, NULL);
 
     while (1) {
-        Serial.print('*');
+        //Serial.print('*');
 
         chThdYield();
 
@@ -100,6 +100,11 @@ void mainThread()
         // Read keypad
         // If a key gets pressed, we send it to the Car
         G_Key = G_Keypad.getKey();
+
+        // Skip next part if no key is pressed
+        if (G_Key == 0) {
+            continue;
+        }
 
         // If the 'F' key is pressed we lower the alarm level in the remote. Like a silence button.
         if (G_Key == 'F') {
