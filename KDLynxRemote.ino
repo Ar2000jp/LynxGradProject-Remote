@@ -3,6 +3,7 @@
  Remote control code.
  */
 
+// Disable preemption for same priority threads.
 #define CH_TIME_QUANTUM 0
 
 #include <stdint.h>
@@ -20,6 +21,10 @@
 #include "debug.h"
 #include "buzzer.h"
 #include "leds.h"
+
+const unsigned int c_HeartbeatInterval = 5000;
+unsigned int G_LastHeartbeatTime = 0;
+byte G_LastAlarmID = 255;
 
 Alarm G_Alarm;
 Radio G_Radio;
@@ -58,15 +63,15 @@ static msg_t BuzzerThread(void* arg)
 
 void mainThread()
 {
-    // Start Red LED thread
+    // Start threads
     chThdCreateStatic(waRedLEDThread, sizeof(waRedLEDThread),
-                      NORMALPRIO + 1, RedLEDThread, NULL);
+                      NORMALPRIO, RedLEDThread, NULL);
 
     chThdCreateStatic(waGreenLEDThread, sizeof(waGreenLEDThread),
-                      NORMALPRIO + 1, GreenLEDThread, NULL);
+                      NORMALPRIO, GreenLEDThread, NULL);
 
     chThdCreateStatic(waBuzzerThread, sizeof(waBuzzerThread),
-                      NORMALPRIO + 1, BuzzerThread, NULL);
+                      NORMALPRIO, BuzzerThread, NULL);
 
     while (1) {
         //Serial.print('*');
@@ -83,13 +88,24 @@ void mainThread()
             }
         }
 
+        chThdYield();
+
         // Check for messages from radio
         G_RadioBufLen = sizeof(G_RadioBuf);
         if (G_Radio.recv(G_RadioBuf, &G_RadioBufLen)) {
             switch (G_RadioBuf[0]) {
-            case 'a':
-                // Alarm! Next byte is alarm level
-                G_Alarm.setLevel((Alarm::AlarmLevel)G_RadioBuf[1]);
+            case 's':
+                // Car status message:
+                // [0] = 's';
+                // [1] = Alarm ID;
+                // [2] = Alarm level;
+                G_LastHeartbeatTime = millis();
+                G_LEDs.setPattern(LEDs::LEDGreen, LEDs::Blink2ShortStop);
+                if (G_RadioBuf[1] != G_LastAlarmID) {
+                    // New Alarm! Set Alarm level.
+                    G_LastAlarmID = G_RadioBuf[1];
+                    G_Alarm.setLevel((Alarm::AlarmLevel)G_RadioBuf[2]);
+                }
                 break;
 
             default:
@@ -97,22 +113,19 @@ void mainThread()
             }
         }
 
+        chThdYield();
+
         // Read keypad
         // If a key gets pressed, we send it to the Car
         G_Key = G_Keypad.getKey();
 
-        // Skip next part if no key is pressed
         if (G_Key == 0) {
+            // Skip next part if no key is pressed
             continue;
-        }
-
-        // If the 'F' key is pressed we lower the alarm level in the remote. Like a silence button.
-        if (G_Key == 'F') {
+        } else if (G_Key == 'F') {
+            // If the 'F' key is pressed we lower the alarm level in the remote. Like a silence button.
             G_Alarm.lowerLevel(Alarm::AlarmAttention);
-
-            //TODO: Add code to check up on alarms with car
         } else {
-            G_Alarm.setLevel((Alarm::AlarmLevel)(G_Key - '0'));
             // First byte is 'c', which means command. 2nd byte is the key code.
             G_RadioBuf[0] = 'c';
             G_RadioBuf[1] = G_Key;
@@ -122,18 +135,26 @@ void mainThread()
             }
             G_LEDs.turnOff(LEDs::LEDGreen);
         }
+
+        chThdYield();
+
+        if (millis() > (G_LastHeartbeatTime + c_HeartbeatInterval)) {
+            // Haven't received a status message in a while. Radio problems.
+            //G_LEDs.setPattern(LEDs::LEDGreen, LEDs::BlinkOff);
+            G_Alarm.raiseLevel(Alarm::AlarmRadioSignal);
+        }
     }
 }
 
 void setup()
 {
+    // Turn on on board LED while initializing
+    pinMode(13, OUTPUT);
+    digitalWrite(13, HIGH);
+
     // Init Serial with PC
     Serial.begin(9600);
     Serial.setTimeout(100);
-
-    // Init emulated radio serial
-    Serial1.begin(9600);
-    Serial1.setTimeout(100);
 
     if (CH_TIME_QUANTUM) {
         Serial.println("You must set CH_TIME_QUANTUM zero in");
@@ -149,8 +170,12 @@ void setup()
     // Welcome pattern
     G_Buzzer.salute();
     G_LEDs.setPattern(LEDs::LEDGreen, LEDs::Blink2ShortStop);
+    G_LEDs.setPattern(LEDs::LEDRed, LEDs::Blink2ShortStop);
 
     Serial.println("Send 'd' to enter debug mode.");
+
+// Done initializing. Turn off LED
+    digitalWrite(13, LOW);
 
     // start ChibiOS
     chBegin(mainThread);
