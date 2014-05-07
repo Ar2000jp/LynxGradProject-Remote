@@ -3,6 +3,7 @@
 
 #include <SPI.h>
 #include <RH_RF22.h>
+#include <RH_Serial.h>
 #include <RHReliableDatagram.h>
 
 class Radio
@@ -14,19 +15,19 @@ public:
     void init();
     bool send(uint8_t* buf, uint8_t bufLen);
     bool recv(uint8_t* buf, uint8_t* bufLen);
+    void switchCommSystem(byte sysID);
 
 private:
     static bool s_Initialized;
-
-    //static uint8_t s_radioBuf[RH_RF22_MAX_MESSAGE_LEN];
-    //static const uint8_t s_radioBufLen;
-    //static uint16_t s_radioRecvTimeout;
+    static byte s_CommSysID;
 
     static const uint8_t c_RCAddress = 1;
     static const uint8_t c_CarAddress = 2;
 
-    static RH_RF22 s_Driver;
-    static RHReliableDatagram s_Manager;
+    static RH_RF22 s_RadioDriver;
+    static RH_Serial s_SerialDriver;
+    static RHReliableDatagram s_RadioManager;
+    static RHReliableDatagram s_SerialManager;
 
 };
 

@@ -6,6 +6,7 @@
 #include "alarm.h"
 #include "mykeypad.h"
 #include "myserial.h"
+#include "radio.h"
 
 class Debug
 {
@@ -23,6 +24,8 @@ private:
     static Buzzer s_Buzzer;
     static Alarm s_Alarm;
     static MyKeypad s_Keypad;
+    static Radio s_Radio;
+
 };
 
 #endif

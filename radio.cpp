@@ -1,12 +1,15 @@
 #include "radio.h"
 
-RHReliableDatagram Radio::s_Manager(s_Driver, c_RCAddress);
-RH_RF22 Radio::s_Driver;
+#include <Arduino.h>
+
+RHReliableDatagram Radio::s_RadioManager(s_RadioDriver, c_RCAddress);
+RHReliableDatagram Radio::s_SerialManager(s_SerialDriver, c_RCAddress);
+
+RH_RF22 Radio::s_RadioDriver;
+RH_Serial Radio::s_SerialDriver(Serial1);
 
 bool Radio::s_Initialized = false;
-
-//const uint8_t Radio::s_radioBufLen = sizeof(s_radioBuf);
-//uint16_t Radio::s_radioRecvTimeout = 50;
+byte Radio::s_CommSysID = 0;
 
 Radio::Radio()
 {
@@ -22,40 +25,73 @@ void Radio::init()
 {
     if (s_Initialized == false) {
         s_Initialized = true;
-        if (!s_Manager.init()) {
-            Serial.println("Radio init failed");
+
+        if (s_RadioManager.init()) {
+            s_RadioManager.setTimeout(100);
+            s_RadioManager.setRetries(5);
+
+            // Use a reasonable comm. speed
+            s_RadioDriver.setModemConfig(RH_RF22::FSK_Rb9_6Fd45);
+
+            // Use max Tx power
+            s_RadioDriver.setTxPower(RH_RF22_TXPOW_20DBM);
+        } else {
+            Serial.println("Radio init failed. Switching to Serial1.");
+            s_CommSysID = 1;
         }
 
-        // Use a reasonable comm. speed
-        s_Driver.setModemConfig(RH_RF22::FSK_Rb9_6Fd45);
-
-        // Use max Tx power
-        s_Driver.setTxPower(RH_RF22_TXPOW_20DBM);
-
-        s_Manager.setTimeout(100);
-        s_Manager.setRetries(5);
+        if (s_SerialManager.init()) {
+            s_SerialManager.setTimeout(100);
+            s_SerialManager.setRetries(5);
+        }
+        else {
+            Serial.println("Serial1 init failed.");
+        }
     }
 }
 
 bool Radio::send(uint8_t* buf, uint8_t bufLen)
 {
-    if (!s_Manager.sendtoWait(buf, bufLen, c_CarAddress)) {
-        Serial.println("sendtoWait failed");
-        return false;
+    if(s_CommSysID == 0) {
+        if (!s_RadioManager.sendtoWait(buf, bufLen, c_CarAddress)) {
+            Serial.println("sendtoWait failed");
+            return false;
+        } else {
+            Serial.println("sendtoWait succeeded");
+        }
+    } else {
+        if (!s_SerialManager.sendtoWait(buf, bufLen, c_CarAddress)) {
+            Serial.println("sendtoWait failed");
+            return false;
+        } else {
+            Serial.println("sendtoWait succeeded");
+        }
     }
-    Serial.println("sendtoWait succeeded");
+
     return true;
 }
 
 bool Radio::recv(uint8_t* buf, uint8_t* bufLen)
 {
     uint8_t from;
-    if (s_Manager.available() < 1) {
-        return false;
-    }
 
-    if (!s_Manager.recvfromAckTimeout(buf, bufLen, 300, &from)) {
-        return false;
+    if(s_CommSysID == 0) {
+        if (s_RadioManager.available() < 1) {
+            return false;
+        }
+
+        if (!s_RadioManager.recvfromAckTimeout(buf, bufLen, 300, &from)) {
+            return false;
+        }
+    }
+    else {
+        if (s_SerialManager.available() < 1) {
+            return false;
+        }
+
+        if (!s_SerialManager.recvfromAckTimeout(buf, bufLen, 300, &from)) {
+            return false;
+        }
     }
 
     Serial.print("got msg from : 0x");
@@ -68,4 +104,9 @@ bool Radio::recv(uint8_t* buf, uint8_t* bufLen)
     }
 
     return true;
+}
+
+void Radio::switchCommSystem(byte sysID)
+{
+    s_CommSysID = sysID;
 }

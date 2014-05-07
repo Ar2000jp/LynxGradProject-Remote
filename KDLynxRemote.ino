@@ -22,8 +22,8 @@
 #include "buzzer.h"
 #include "leds.h"
 
-const unsigned int c_HeartbeatInterval = 5000;
-unsigned int G_LastHeartbeatTime = 0;
+const unsigned int c_UpdateInterval = 5000;
+unsigned int G_LastUpdateTime = 0;
 byte G_LastAlarmID = 255;
 
 Alarm G_Alarm;
@@ -99,7 +99,7 @@ void mainThread()
                 // [0] = 's';
                 // [1] = Alarm ID;
                 // [2] = Alarm level;
-                G_LastHeartbeatTime = millis();
+                G_LastUpdateTime = millis();
                 G_LEDs.setPattern(LEDs::LEDGreen, LEDs::Blink2ShortStop);
                 if (G_RadioBuf[1] != G_LastAlarmID) {
                     // New Alarm! Set Alarm level.
@@ -138,7 +138,7 @@ void mainThread()
 
         chThdYield();
 
-        if (millis() > (G_LastHeartbeatTime + c_HeartbeatInterval)) {
+        if (millis() > (G_LastUpdateTime + c_UpdateInterval)) {
             // Haven't received a status message in a while. Radio problems.
             //G_LEDs.setPattern(LEDs::LEDGreen, LEDs::BlinkOff);
             G_Alarm.raiseLevel(Alarm::AlarmRadioSignal);
@@ -155,6 +155,16 @@ void setup()
     // Init Serial with PC
     Serial.begin(9600);
     Serial.setTimeout(100);
+
+    // Init backup comm. channel
+    Serial1.begin(9600);
+    Serial1.setTimeout(100);
+
+    pinMode(40, INPUT_PULLUP);
+    if(digitalRead(40) == false)
+    {
+        G_Radio.switchCommSystem(1);
+    }
 
     if (CH_TIME_QUANTUM) {
         Serial.println("You must set CH_TIME_QUANTUM zero in");
