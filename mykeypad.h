@@ -11,7 +11,6 @@ public:
 
     char getKey();
 
-
 private:
     static bool s_Initialized;
 

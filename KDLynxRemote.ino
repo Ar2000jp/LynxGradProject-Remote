@@ -3,8 +3,11 @@
  Remote control code.
  */
 
-// Disable preemption for same priority threads.
-#define CH_TIME_QUANTUM 0
+// Disable preemption for same priority threads. (Doesn't seem to work. Probably AVR specific bug.)
+//#define CH_TIME_QUANTUM 0
+
+// Enable Debug messages on Serial port
+//#define DEBUG
 
 #include <stdint.h>
 
@@ -29,9 +32,12 @@ byte G_LastAlarmID = 255;
 Alarm G_Alarm;
 Radio G_Radio;
 MyKeypad G_Keypad;
-Debug G_Debug;
 Buzzer G_Buzzer;
 LEDs G_LEDs;
+
+#ifdef DEBUG
+Debug G_Debug;
+#endif
 
 char G_Key = 0;
 uint8_t G_RadioBuf[RH_RF22_MAX_MESSAGE_LEN];
@@ -74,8 +80,11 @@ void mainThread()
                       NORMALPRIO, BuzzerThread, NULL);
 
     while (1) {
-        //Serial.print('*');
+#ifdef DEBUG
+        Serial.print('M');
+#endif
 
+#ifdef DEBUG
         chThdYield();
 
         // Check for data on Serial
@@ -87,10 +96,12 @@ void mainThread()
                 drainSerial();
             }
         }
+#endif
 
         chThdYield();
 
         // Check for messages from radio
+        G_RadioBuf[0] = 0;
         G_RadioBufLen = sizeof(G_RadioBuf);
         if (G_Radio.recv(G_RadioBuf, &G_RadioBufLen)) {
             switch (G_RadioBuf[0]) {
@@ -109,7 +120,10 @@ void mainThread()
                 break;
 
             default:
+#ifdef DEBUG
                 Serial.println("Invalid message.");
+#endif
+                break;
             }
         }
 
@@ -120,8 +134,7 @@ void mainThread()
         G_Key = G_Keypad.getKey();
 
         if (G_Key == 0) {
-            // Skip next part if no key is pressed
-            continue;
+            // Do nothing if no key is pressed
         } else if (G_Key == 'F') {
             // If the 'F' key is pressed we lower the alarm level in the remote. Like a silence button.
             G_Alarm.lowerLevel(Alarm::AlarmAttention);
@@ -140,7 +153,6 @@ void mainThread()
 
         if (millis() > (G_LastUpdateTime + c_UpdateInterval)) {
             // Haven't received a status message in a while. Radio problems.
-            //G_LEDs.setPattern(LEDs::LEDGreen, LEDs::BlinkOff);
             G_Alarm.raiseLevel(Alarm::AlarmRadioSignal);
         }
     }
@@ -148,12 +160,12 @@ void mainThread()
 
 void setup()
 {
-    // Turn on on board LED while initializing
+    // Turn on onboard LED while initializing
     pinMode(13, OUTPUT);
     digitalWrite(13, HIGH);
 
     // Init Serial with PC
-    Serial.begin(9600);
+    Serial.begin(115200);
     Serial.setTimeout(100);
 
     // Init backup comm. channel
@@ -166,25 +178,19 @@ void setup()
         G_Radio.switchCommSystem(1);
     }
 
-    if (CH_TIME_QUANTUM) {
-        Serial.println("You must set CH_TIME_QUANTUM zero in");
-        Serial.println("libraries/ChibiOS_AVR/utility/chconf.h");
-        Serial.println("to enable cooperative scheduling.");
-        while (1);
-    }
-
     // Initialize Radio
     G_Radio.init();
-    //SPI.setClockDivider(SPI_CLOCK_DIV128);
 
     // Welcome pattern
     G_Buzzer.salute();
     G_LEDs.setPattern(LEDs::LEDGreen, LEDs::Blink2ShortStop);
     G_LEDs.setPattern(LEDs::LEDRed, LEDs::Blink2ShortStop);
 
+#ifdef DEBUG
     Serial.println("Send 'd' to enter debug mode.");
+#endif
 
-// Done initializing. Turn off LED
+    // Done initializing. Turn off LED
     digitalWrite(13, LOW);
 
     // start ChibiOS

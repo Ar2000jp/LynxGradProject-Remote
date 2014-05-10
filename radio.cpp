@@ -36,7 +36,9 @@ void Radio::init()
             // Use max Tx power
             s_RadioDriver.setTxPower(RH_RF22_TXPOW_20DBM);
         } else {
+#ifdef DEBUG
             Serial.println("Radio init failed. Switching to Serial1.");
+#endif
             s_CommSysID = 1;
         }
 
@@ -45,7 +47,9 @@ void Radio::init()
             s_SerialManager.setRetries(5);
         }
         else {
+#ifdef DEBUG
             Serial.println("Serial1 init failed.");
+#endif
         }
     }
 }
@@ -54,17 +58,25 @@ bool Radio::send(uint8_t* buf, uint8_t bufLen)
 {
     if(s_CommSysID == 0) {
         if (!s_RadioManager.sendtoWait(buf, bufLen, c_CarAddress)) {
+#ifdef DEBUG
             Serial.println("sendtoWait failed");
+#endif
             return false;
         } else {
+#ifdef DEBUG
             Serial.println("sendtoWait succeeded");
+#endif
         }
     } else {
         if (!s_SerialManager.sendtoWait(buf, bufLen, c_CarAddress)) {
+#ifdef DEBUG
             Serial.println("sendtoWait failed");
+#endif
             return false;
         } else {
+#ifdef DEBUG
             Serial.println("sendtoWait succeeded");
+#endif
         }
     }
 
@@ -94,10 +106,12 @@ bool Radio::recv(uint8_t* buf, uint8_t* bufLen)
         }
     }
 
+#ifdef DEBUG
     Serial.print("got msg from : 0x");
     Serial.print(from, HEX);
     Serial.print(": ");
     Serial.println((char*)buf);
+#endif
 
     if (from != c_CarAddress) {
         return false;
