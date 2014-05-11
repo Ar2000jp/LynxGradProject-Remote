@@ -3,6 +3,7 @@
 
 #include "leds.h"
 #include "buzzer.h"
+#include "globals.h"
 
 class Alarm
 {

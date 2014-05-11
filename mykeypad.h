@@ -3,6 +3,8 @@
 
 #include <Keypad.h>
 
+#include "globals.h"
+
 class MyKeypad
 {
 public:

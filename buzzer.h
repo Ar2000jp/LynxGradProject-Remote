@@ -3,6 +3,8 @@
 
 #include "Arduino.h"
 
+#include "globals.h"
+
 class Buzzer
 {
 public:

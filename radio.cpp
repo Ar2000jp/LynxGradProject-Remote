@@ -2,6 +2,8 @@
 
 #include <Arduino.h>
 
+#include "globals.h"
+
 RHReliableDatagram Radio::s_RadioManager(s_RadioDriver, c_RCAddress);
 RHReliableDatagram Radio::s_SerialManager(s_SerialDriver, c_RCAddress);
 

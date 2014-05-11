@@ -7,6 +7,7 @@
 #include "mykeypad.h"
 #include "myserial.h"
 #include "radio.h"
+#include "globals.h"
 
 class Debug
 {

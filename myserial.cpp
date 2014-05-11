@@ -1,5 +1,7 @@
 #include "Arduino.h"
+
 #include "myserial.h"
+#include "globals.h"
 
 void drainSerial()
 {

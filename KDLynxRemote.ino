@@ -3,11 +3,6 @@
  Remote control code.
  */
 
-// Disable preemption for same priority threads. (Doesn't seem to work. Probably AVR specific bug.)
-//#define CH_TIME_QUANTUM 0
-
-// Enable Debug messages on Serial port
-//#define DEBUG
 
 #include <stdint.h>
 
@@ -24,6 +19,7 @@
 #include "debug.h"
 #include "buzzer.h"
 #include "leds.h"
+#include "globals.h"
 
 const unsigned int c_UpdateInterval = 5000;
 unsigned int G_LastUpdateTime = 0;
@@ -80,9 +76,9 @@ void mainThread()
                       NORMALPRIO, BuzzerThread, NULL);
 
     while (1) {
-#ifdef DEBUG
-        Serial.print('M');
-#endif
+// #ifdef DEBUG
+//         Serial.print('M');
+// #endif
 
 #ifdef DEBUG
         chThdYield();
