@@ -29,7 +29,7 @@ void Radio::init()
         s_Initialized = true;
 
         if (s_RadioManager.init()) {
-            s_RadioManager.setTimeout(100);
+            s_RadioManager.setTimeout(200);
             s_RadioManager.setRetries(5);
 
             // Use a reasonable comm. speed

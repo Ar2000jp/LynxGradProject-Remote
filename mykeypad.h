@@ -14,8 +14,6 @@ public:
     char getKey();
 
 private:
-    static bool s_Initialized;
-
 // Keypad pins
     static const byte c_keypadCol1Pin = 27;
     static const byte c_keypadCol2Pin = 26;

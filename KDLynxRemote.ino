@@ -20,8 +20,9 @@
 #include "buzzer.h"
 #include "leds.h"
 #include "globals.h"
+#include "mymutexes.h"
 
-const unsigned int c_UpdateInterval = 5000;
+const unsigned int c_UpdateInterval = 10000;
 unsigned int G_LastUpdateTime = 0;
 byte G_LastAlarmID = 255;
 
@@ -76,9 +77,9 @@ void mainThread()
                       NORMALPRIO, BuzzerThread, NULL);
 
     while (1) {
-// #ifdef DEBUG
-//         Serial.print('M');
-// #endif
+#ifdef DEBUG
+        Serial.print('M');
+#endif
 
 #ifdef DEBUG
         chThdYield();

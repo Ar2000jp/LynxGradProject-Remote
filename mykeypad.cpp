@@ -1,7 +1,5 @@
 #include "mykeypad.h"
 
-bool MyKeypad::s_Initialized = false;
-
 const char MyKeypad::c_hexaKeys[c_keypadRows][c_keypadCols] = {
     {'0', '1', '2', '3'},
     {'4', '5', '6', '7'},
@@ -23,10 +21,7 @@ Keypad MyKeypad::s_Keypad = Keypad(makeKeymap(MyKeypad::c_hexaKeys), (byte*)MyKe
 
 MyKeypad::MyKeypad()
 {
-    if (s_Initialized == false) {
-        s_Initialized = true;
-        //Keypad s_Keypad = Keypad(makeKeymap(c_hexaKeys), (byte*)c_rowPins, (byte*)c_colPins, c_keypadRows, c_keypadCols);
-    }
+
 }
 
 MyKeypad::~MyKeypad()
