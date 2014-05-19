@@ -23,7 +23,7 @@
 #include "mymutexes.h"
 
 const unsigned int c_UpdateInterval = 10000;
-unsigned int G_LastUpdateTime = 0;
+unsigned long G_LastUpdateTime = 0;
 byte G_LastAlarmID = 255;
 
 Alarm G_Alarm;
@@ -99,30 +99,34 @@ void mainThread()
 
         // Check for messages from radio
         G_RadioBuf[0] = 0;
+        G_RadioBuf[1] = 0;
+        G_RadioBuf[2] = 0;
+        G_RadioBuf[3] = 0;
         G_RadioBufLen = sizeof(G_RadioBuf);
-        if (G_Radio.recv(G_RadioBuf, &G_RadioBufLen)) {
-            switch (G_RadioBuf[0]) {
-            case 's':
+        if(G_Radio.recv(G_RadioBuf, &G_RadioBufLen)) {
+            if ((G_RadioBuf[0] == 's') && (G_RadioBuf[3] == 'm')) {
                 // Car status message:
                 // [0] = 's';
-                // [1] = Alarm ID;
-                // [2] = Alarm level;
+                // [1] = Alarm level;
+                // [2] = Alarm ID;
+                // [3] = 'm';
                 G_LastUpdateTime = millis();
                 G_LEDs.setPattern(LEDs::LEDGreen, LEDs::Blink2ShortStop);
-                if (G_RadioBuf[1] != G_LastAlarmID) {
+                if (G_RadioBuf[2] != G_LastAlarmID) {
                     // New Alarm! Set Alarm level.
-                    G_LastAlarmID = G_RadioBuf[1];
-                    G_Alarm.setLevel((Alarm::AlarmLevel)G_RadioBuf[2]);
+                    G_Alarm.setLevel((Alarm::AlarmLevel)G_RadioBuf[1]);
+                    G_LastAlarmID = G_RadioBuf[2];
+#ifdef DEBUG
+                    Serial.println("New Alarm.");
+#endif
                 }
-                break;
-
-            default:
+            } else {
 #ifdef DEBUG
                 Serial.println("Invalid message.");
 #endif
-                break;
             }
         }
+
 
         chThdYield();
 
@@ -130,12 +134,13 @@ void mainThread()
         // If a key gets pressed, we send it to the Car
         G_Key = G_Keypad.getKey();
 
-        if (G_Key == 0) {
-            // Do nothing if no key is pressed
-        } else if (G_Key == 'F') {
-            // If the 'F' key is pressed we lower the alarm level in the remote. Like a silence button.
-            G_Alarm.lowerLevel(Alarm::AlarmAttention);
-        } else {
+        // Do nothing if no key is pressed
+        if (G_Key != 0) {
+            if ((G_Key == 'F') || (G_Key == 'C') || (G_Key == 'D')) {
+                // If the 'F', 'C', or 'D' key is pressed we lower the alarm level in the remote. Like a silence button.
+                G_Alarm.lowerLevel(Alarm::AlarmAttention);
+            }
+
             // First byte is 'c', which means command. 2nd byte is the key code.
             G_RadioBuf[0] = 'c';
             G_RadioBuf[1] = G_Key;
@@ -151,6 +156,11 @@ void mainThread()
         if (millis() > (G_LastUpdateTime + c_UpdateInterval)) {
             // Haven't received a status message in a while. Radio problems.
             G_Alarm.raiseLevel(Alarm::AlarmRadioSignal);
+        }
+        else {
+            if(G_Alarm.getLevel() == Alarm::AlarmRadioSignal) {
+                G_Alarm.setLevel(Alarm::AlarmOff);
+            }
         }
     }
 }

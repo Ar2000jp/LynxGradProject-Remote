@@ -14,6 +14,10 @@ Alarm::~Alarm()
 
 void Alarm::setLevel(Alarm::AlarmLevel level)
 {
+    if(s_AlarmLevel == level) {
+        return;
+    }
+
     s_AlarmLevel = level;
     switch (level) {
     case 0:
